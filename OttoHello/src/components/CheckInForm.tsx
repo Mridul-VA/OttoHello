@@ -10,6 +10,7 @@ import {
   Shield,
   Clock
 } from 'lucide-react';
+import Joyride, { Step, STATUS, CallBackProps } from 'react-joyride';  // ⬅️ add here
 import { REASON_OPTIONS, type ReasonForVisit } from '../types/visitor';
 
 interface CheckInFormProps {
@@ -33,6 +34,43 @@ export default function CheckInForm({ onSubmit, onBack }: CheckInFormProps) {
   const [photo, setPhoto] = useState<string>('');
   const [showCamera, setShowCamera] = useState(false);
   const [cameraError, setCameraError] = useState('');
+  /* ─── In-App Tour ─────────────────────────────────────────────── */
+const [runTour, setRunTour] = useState(false);
+
+useEffect(() => {
+  const seen = localStorage.getItem('ottohello_tour_done');
+  if (!seen) setRunTour(true);
+}, []);
+
+const tourSteps: Step[] = [
+  {
+    target: '.capture-photo-btn',
+    content: 'Step 1 → Take the visitor’s photo here.',
+    placement: 'bottom',
+    disableBeacon: true
+  },
+  {
+    target: '.person-to-meet-input',
+    content: 'Step 2 → Type who the visitor is meeting.',
+    placement: 'top'
+  },
+  {
+    target: '.checkin-submit',
+    content: 'Step 3 → Press to complete the check-in.',
+    placement: 'left'
+  }
+];
+
+const handleJoyride = (data: CallBackProps) => {
+  const { status } = data;
+  if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
+    localStorage.setItem('ottohello_tour_done', 'true');
+    setRunTour(false);
+  }
+};
+
+/* ─────────────────────────────────────────────────────────────── */
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -151,7 +189,7 @@ export default function CheckInForm({ onSubmit, onBack }: CheckInFormProps) {
                         <div className="absolute inset-0 rounded-2xl border-4 border-cyan-400 animate-pulse pointer-events-none"></div>
                       </div>
                       <div className="flex gap-4 justify-center">
-                        <button onClick={capturePhoto} className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg shadow-cyan-500/25">
+                        <button onClick={capturePhoto} className="capture-photo-btn bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg shadow-cyan-500/25">
                           Capture Photo
                         </button>
                         <button onClick={stopCamera} className="bg-white/10 backdrop-blur-xl border border-white/20 hover:bg-white/20 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-300">
@@ -284,6 +322,23 @@ export default function CheckInForm({ onSubmit, onBack }: CheckInFormProps) {
       </div>
 
       <canvas ref={canvasRef} className="hidden" />
+      <Joyride
+  steps={tourSteps}
+  run={runTour}
+  continuous
+  showSkipButton
+  callback={handleJoyride}
+  styles={{
+    options: { zIndex: 10000, primaryColor: '#1E40CA', arrowColor: '#1E40CA' },
+    tooltip: { borderRadius: 12, padding: 16 }
+  }}
+  floaterProps={{
+    styles: { arrow: { length: 14, spread: 30 } }
+  }}
+/>
+
     </div>
   );
 }
+
+
