@@ -1,30 +1,62 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Search, User, Clock, MapPin, Users, Activity } from 'lucide-react';
-import { Visitor } from '../types/visitor';
+import {
+  ArrowLeft,
+  Search,
+  User,
+  Clock,
+  MapPin,
+  Users,
+  Activity,
+} from 'lucide-react';
+import { LocalVisitor } from '../hooks/useVisitorStorage';
 
+/* ---------- props ---------------------------------------------------- */
 interface CheckOutFormProps {
-  visitors: Visitor[];
+  visitors: LocalVisitor[];
   onCheckOut: (visitorId: string) => void;
   onBack: () => void;
 }
 
-export default function CheckOutForm({ visitors, onCheckOut, onBack }: CheckOutFormProps) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [foundVisitor, setFoundVisitor] = useState<Visitor | null>(null);
-  const [notFound, setNotFound] = useState(false);
+/* ==================================================================== */
+export default function CheckOutForm({
+  visitors,
+  onCheckOut,
+  onBack,
+}: CheckOutFormProps) {
+  const [searchTerm,   setSearchTerm]   = useState('');
+  const [foundVisitor, setFoundVisitor] = useState<LocalVisitor | null>(null);
+  const [notFound,     setNotFound]     = useState(false);
 
-  const activeVisitors = visitors.filter(v => !v.checkOutTime);
+  /*  🔎  TEMP DEBUG LOGS  — remove later */
+  console.log('👀 props.visitors =', visitors);
+  console.log(
+    '✅ activeVisitors.length =',
+    visitors.filter(v => !v.checkOutTime).length,
+  );
+
+  /* ---------- helpers ------------------------------------------------ */
+  const formatPurpose = (v: LocalVisitor) => {
+    if (v.reasonForVisit === 'other') return v.otherReason ?? 'Other';
+    if (v.reasonForVisit)
+      return v.reasonForVisit
+        .replace('-', ' ')
+        .replace(/\b\w/g, (l) => l.toUpperCase());
+    return '—';
+  };
+
+  const activeVisitors = visitors.filter((v) => !v.checkOutTime);
 
   const handleSearch = () => {
     if (!searchTerm.trim()) return;
 
-    const visitor = activeVisitors.find(v => 
-      v.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (v.phoneNumber && v.phoneNumber.includes(searchTerm))
+    const vis = activeVisitors.find(
+      (v) =>
+        v.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (v.phoneNumber && v.phoneNumber.includes(searchTerm)),
     );
 
-    if (visitor) {
-      setFoundVisitor(visitor);
+    if (vis) {
+      setFoundVisitor(vis);
       setNotFound(false);
     } else {
       setFoundVisitor(null);
@@ -32,39 +64,35 @@ export default function CheckOutForm({ visitors, onCheckOut, onBack }: CheckOutF
     }
   };
 
-  const handleCheckOut = () => {
-    if (foundVisitor) {
-      onCheckOut(foundVisitor.id);
-    }
-  };
-
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
+    if (e.key === 'Enter') handleSearch();
   };
 
-  const getVisitDuration = (checkInTime: string) => {
-    const duration = Date.now() - new Date(checkInTime).getTime();
-    const hours = Math.floor(duration / (1000 * 60 * 60));
-    const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
-    return `${hours}h ${minutes}m`;
+  const handleCheckOutClick = () => {
+    if (foundVisitor) onCheckOut(foundVisitor.id);
   };
 
+  const getVisitDuration = (iso: string) => {
+    const ms = Date.now() - new Date(iso).getTime();
+    const h  = Math.floor(ms / 3_600_000);
+    const m  = Math.floor((ms % 3_600_000) / 60_000);
+    return `${h}h ${m}m`;
+  };
+
+  /* --------------------------- UI ----------------------------------- */
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-emerald-900 to-slate-900 relative overflow-hidden">
-      {/* Animated Background */}
+      {/* animated blobs + grid background (unchanged) */}
       <div className="absolute inset-0">
         <div className="absolute top-20 left-20 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute bottom-20 right-20 w-72 h-72 bg-teal-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
       </div>
-      
-      {/* Grid Pattern */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px]" />
 
       <div className="relative z-10 min-h-screen flex items-center justify-center p-6">
         <div className="max-w-5xl w-full">
-          {/* Header */}
+
+          {/* header ----------------------------------------------------- */}
           <div className="flex items-center gap-6 mb-12">
             <button
               onClick={onBack}
@@ -80,10 +108,12 @@ export default function CheckOutForm({ visitors, onCheckOut, onBack }: CheckOutF
             </div>
           </div>
 
+          {/* ------------------ GRID (left + right) -------------------- */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Left Column - Search */}
+
+            {/* ───────── LEFT COLUMN (stats + search) ───────── */}
             <div className="space-y-8">
-              {/* Stats Dashboard */}
+              {/* small dashboard */}
               <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
                 <div className="flex items-center gap-4 mb-6">
                   <div className="w-12 h-12 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-xl flex items-center justify-center">
@@ -96,17 +126,21 @@ export default function CheckOutForm({ visitors, onCheckOut, onBack }: CheckOutF
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-emerald-400">{activeVisitors.length}</div>
-                    <div className="text-gray-400 text-sm">Active Visitors</div>
+                    <p className="text-3xl font-bold text-emerald-400">
+                      {activeVisitors.length}
+                    </p>
+                    <p className="text-gray-400 text-sm">Active Visitors</p>
                   </div>
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-teal-400">{visitors.length}</div>
-                    <div className="text-gray-400 text-sm">Total Today</div>
+                    <p className="text-3xl font-bold text-teal-400">
+                      {visitors.length}
+                    </p>
+                    <p className="text-gray-400 text-sm">Total Today</p>
                   </div>
                 </div>
               </div>
 
-              {/* Search Section */}
+              {/* search panel */}
               <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8">
                 <div className="flex items-center gap-3 mb-6">
                   <User className="w-6 h-6 text-emerald-400" />
@@ -114,20 +148,19 @@ export default function CheckOutForm({ visitors, onCheckOut, onBack }: CheckOutF
                 </div>
                 <div className="space-y-4">
                   <input
-                    type="text"
                     value={searchTerm}
                     onChange={(e) => {
                       setSearchTerm(e.target.value);
-                      setNotFound(false);
                       setFoundVisitor(null);
+                      setNotFound(false);
                     }}
-                    onKeyPress={handleKeyPress}
-                    className="w-full px-6 py-4 bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-white placeholder-gray-400 text-lg transition-all duration-300"
-                    placeholder="Enter your full name"
+                    onKeyDown={handleKeyPress}
+                    className="w-full px-6 py-4 bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl focus:ring-2 focus:ring-emerald-500 text-white placeholder-gray-400 text-lg transition-all"
+                    placeholder="Enter name or phone"
                   />
                   <button
                     onClick={handleSearch}
-                    className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-[1.02] shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-3"
+                    className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white px-8 py-4 rounded-xl font-semibold transition-all flex items-center justify-center gap-3"
                   >
                     <Search className="w-5 h-5" />
                     Search Visitor
@@ -136,100 +169,91 @@ export default function CheckOutForm({ visitors, onCheckOut, onBack }: CheckOutF
               </div>
             </div>
 
-            {/* Right Column - Results */}
+            {/* ───────── RIGHT COLUMN (found card / list) ───────── */}
             <div className="space-y-8">
-              {/* Found Visitor */}
+
+              {/* VISITOR FOUND CARD */}
               {foundVisitor && (
-                <div className="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 backdrop-blur-xl border border-emerald-500/20 rounded-2xl p-8">
-                  <div className="flex items-start justify-between mb-6">
+                <div className="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 rounded-2xl p-8">
+                  <div className="flex justify-between mb-6">
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse"></div>
-                        <span className="text-emerald-400 text-sm font-medium">VISITOR FOUND</span>
-                      </div>
+                      <p className="text-emerald-400 text-sm font-medium mb-2">
+                        VISITOR FOUND
+                      </p>
                       <h3 className="text-2xl font-bold text-white mb-4">
                         {foundVisitor.fullName}
                       </h3>
+
                       <div className="space-y-3 text-gray-300">
-                        <div className="flex items-center gap-3">
-                          <Users className="w-4 h-4 text-emerald-400" />
-                          <span><span className="text-gray-400">Meeting:</span> {foundVisitor.personToMeet}</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <MapPin className="w-4 h-4 text-emerald-400" />
-                          <span><span className="text-gray-400">Purpose:</span> {
-                            foundVisitor.reasonForVisit === 'other' 
-                              ? foundVisitor.otherReason 
-                              : foundVisitor.reasonForVisit.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())
-                          }</span>
-                        </div>
-                        <div className="flex items-center gap-3">
+                        {foundVisitor.personToMeet && (
+                          <p className="flex items-center gap-3">
+                            <Users className="w-4 h-4 text-emerald-400" />
+                            Meeting:&nbsp;{foundVisitor.personToMeet}
+                          </p>
+                        )}
+
+                        {foundVisitor.reasonForVisit && (
+                          <p className="flex items-center gap-3">
+                            <MapPin className="w-4 h-4 text-emerald-400" />
+                            Purpose:&nbsp;{formatPurpose(foundVisitor)}
+                          </p>
+                        )}
+
+                        <p className="flex items-center gap-3">
                           <Clock className="w-4 h-4 text-emerald-400" />
-                          <span><span className="text-gray-400">Duration:</span> {getVisitDuration(foundVisitor.checkInTime)}</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <Clock className="w-4 h-4 text-emerald-400" />
-                          <span><span className="text-gray-400">Arrived:</span> {
-                            new Date(foundVisitor.checkInTime).toLocaleString()
-                          }</span>
-                        </div>
+                          Duration:&nbsp;{getVisitDuration(foundVisitor.checkInTime)}
+                        </p>
                       </div>
                     </div>
+
                     {foundVisitor.photo && (
-                      <div className="relative">
-                        <img
-                          src={foundVisitor.photo}
-                          alt="Visitor"
-                          className="w-20 h-16 rounded-xl object-cover border-2 border-emerald-400/50 shadow-lg shadow-emerald-500/25"
-                        />
-                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full"></div>
-                      </div>
+                      <img
+                        src={foundVisitor.photo}
+                        alt="Visitor"
+                        className="w-20 h-16 rounded-xl object-cover border-2 border-emerald-400/50"
+                      />
                     )}
                   </div>
+
                   <button
-                    onClick={handleCheckOut}
-                    className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold py-4 px-8 rounded-xl text-lg transition-all duration-300 transform hover:scale-[1.02] shadow-lg shadow-emerald-500/25"
+                    onClick={handleCheckOutClick}
+                    className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold py-4 rounded-xl text-lg transition-all"
                   >
                     Complete Check-Out
                   </button>
                 </div>
               )}
 
-              {/* Not Found */}
-              {notFound && (
-                <div className="bg-red-500/10 backdrop-blur-xl border border-red-500/20 rounded-2xl p-8 text-center">
-                  <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Search className="w-8 h-8 text-red-400" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-white mb-2">Visitor Not Found</h3>
-                  <p className="text-red-300">
-                    No active visitor found with that name. Please verify the spelling or contact reception.
-                  </p>
+              {/* ZERO-STATE (no one inside) */}
+              {activeVisitors.length === 0 && (
+                <div className="text-white bg-red-500/20 border border-red-400/30 p-4 rounded-xl">
+                  No active visitors currently inside the building.
                 </div>
               )}
 
-              {/* Active Visitors List */}
+              {/* ACTIVE VISITOR LIST */}
               {activeVisitors.length > 0 && !foundVisitor && (
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8">
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-8">
                   <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-3">
                     <Users className="w-6 h-6 text-emerald-400" />
                     Active Visitors ({activeVisitors.length})
                   </h3>
+
                   <div className="space-y-3 max-h-80 overflow-y-auto">
-                    {activeVisitors.map(visitor => (
+                    {activeVisitors.map((v) => (
                       <div
-                        key={visitor.id}
-                        className="flex items-center justify-between p-4 bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl hover:bg-white/10 transition-all duration-300 cursor-pointer group"
+                        key={v.id}
+                        className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition cursor-pointer"
                         onClick={() => {
-                          setSearchTerm(visitor.fullName);
-                          setFoundVisitor(visitor);
+                          setSearchTerm(v.fullName);
+                          setFoundVisitor(v);
                           setNotFound(false);
                         }}
                       >
                         <div className="flex items-center gap-4">
-                          {visitor.photo ? (
+                          {v.photo ? (
                             <img
-                              src={visitor.photo}
+                              src={v.photo}
                               alt="Visitor"
                               className="w-12 h-9 rounded-lg object-cover border border-white/20"
                             />
@@ -238,21 +262,25 @@ export default function CheckOutForm({ visitors, onCheckOut, onBack }: CheckOutF
                               <User className="w-4 h-4 text-gray-300" />
                             </div>
                           )}
+
                           <div>
-                            <p className="font-semibold text-white group-hover:text-emerald-400 transition-colors">
-                              {visitor.fullName}
-                            </p>
-                            <p className="text-sm text-gray-400">Meeting: {visitor.personToMeet}</p>
+                            <p className="font-semibold text-white">{v.fullName}</p>
+                            {v.personToMeet && (
+                              <p className="text-sm text-gray-400">
+                                Meeting: {v.personToMeet}
+                              </p>
+                            )}
                           </div>
                         </div>
+
                         <div className="text-right">
                           <p className="text-sm text-emerald-400 font-medium">
-                            {getVisitDuration(visitor.checkInTime)}
+                            {getVisitDuration(v.checkInTime)}
                           </p>
                           <p className="text-xs text-gray-500">
-                            {new Date(visitor.checkInTime).toLocaleTimeString([], { 
-                              hour: '2-digit', 
-                              minute: '2-digit' 
+                            {new Date(v.checkInTime).toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit',
                             })}
                           </p>
                         </div>
@@ -261,8 +289,25 @@ export default function CheckOutForm({ visitors, onCheckOut, onBack }: CheckOutF
                   </div>
                 </div>
               )}
-            </div>
-          </div>
+
+              {/* NOT-FOUND banner */}
+              {notFound && (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-8 text-center">
+                  <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Search className="w-8 h-8 text-red-400" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-white mb-2">
+                    Visitor Not Found
+                  </h3>
+                  <p className="text-red-300">
+                    No active visitor matches that search. Please check the spelling
+                    or contact reception.
+                  </p>
+                </div>
+              )}
+
+            </div>{/* /RIGHT column */}
+          </div>{/* /GRID */}
         </div>
       </div>
     </div>

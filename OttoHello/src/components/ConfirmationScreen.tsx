@@ -1,30 +1,36 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CheckCircle, Home, Sparkles, Clock, Shield, Zap } from 'lucide-react';
 
+/* ─── props ───────────────────────────────────────────────────── */
 interface ConfirmationScreenProps {
   type: 'checkin' | 'checkout';
-  visitorName: string;
+  visitor: { id: string; fullName: string };
   onReturn: () => void;
 }
 
-export default function ConfirmationScreen({ type, visitorName, onReturn }: ConfirmationScreenProps) {
+/* ─── component ───────────────────────────────────────────────── */
+export default function ConfirmationScreen({
+  type,
+  visitor,
+  onReturn,
+}: ConfirmationScreenProps) {
+  const { fullName } = visitor;        // ← use it like a normal string
   const [countdown, setCountdown] = useState(5);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCountdown(prev => {
+      setCountdown((prev) => {
         if (prev <= 1) {
-          onReturn();
+          onReturn();                    // auto-return to home
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
-
     return () => clearInterval(timer);
   }, [onReturn]);
 
-  const isCheckIn = type === 'checkin';
+  const isCheckIn = type === 'checkin';   // handy flag
 
   return (
     <div className={`min-h-screen relative overflow-hidden ${
@@ -103,7 +109,7 @@ export default function ConfirmationScreen({ type, visitorName, onReturn }: Conf
                 <h2 className="text-5xl md:text-6xl font-bold text-white mb-6">
                   Welcome,{' '}
                   <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-                    {visitorName}
+                    {visitor.fullName}
                   </span>
                 </h2>
                 <div className="space-y-4">
@@ -127,7 +133,7 @@ export default function ConfirmationScreen({ type, visitorName, onReturn }: Conf
                 <h2 className="text-5xl md:text-6xl font-bold text-white mb-6">
                   Thank you,{' '}
                   <span className="bg-gradient-to-r from-emerald-400 to-teal-500 bg-clip-text text-transparent">
-                    {visitorName}
+                    {visitor.fullName}
                   </span>
                 </h2>
                 <div className="space-y-4">

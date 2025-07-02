@@ -8,7 +8,7 @@ interface WelcomeScreenProps {
 
 export default function WelcomeScreen({ onCheckIn, onCheckOut }: WelcomeScreenProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative ">
       {/* Animated Background Elements */}
       <div className="absolute inset-0">
         <div className="absolute top-20 left-20 w-72 h-72 bg-blue-500/20 rounded-full blur-3xl animate-pulse"></div>
@@ -40,11 +40,13 @@ export default function WelcomeScreen({ onCheckIn, onCheckOut }: WelcomeScreenPr
             </div>
 
             {/* Welcome Message */}
-            <div className="mb-12">
+            <div className="mb-12 text-center">
               <h2 className="text-6xl md:text-8xl font-bold text-white mb-6 leading-tight">
                 Welcome to
               </h2>
-              <div className="text-6xl md:text-8xl font-black bg-gradient-to-r from-emerald-400 via-cyan-500 to-blue-600 bg-clip-text text-transparent mb-8">
+              <div className="text-6xl md:text-8xl font-black bg-gradient-to-r
++                 from-emerald-400 via-cyan-500 to-blue-600
++                 bg-clip-text text-transparent mb-8 px-4">
                 GrowthJockey
               </div>
             </div>

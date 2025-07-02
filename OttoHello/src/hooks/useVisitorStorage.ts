@@ -1,58 +1,57 @@
-import { useState, useEffect } from 'react';
-import { Visitor } from '../types/visitor';
+/*  src/hooks/useVisitorStorage.ts  */
+import { useState } from 'react';
 
-const STORAGE_KEY = 'otto-hello-visitors';
+/* keep only the fields we really store locally */
+export interface LocalVisitor {
+  id: string;
+  fullName: string;
+
+  /* optional extras (safe to be undefined) */
+  personToMeet?: string;
+  reasonForVisit?: string;
+  otherReason?: string;
+  phoneNumber?: string;
+  photo?: string;
+
+  checkInTime: string;          // ISO
+  checkOutTime: string | null;
+}
+
 
 export function useVisitorStorage() {
-  const [visitors, setVisitors] = useState<Visitor[]>([]);
+  const [visitors, setVisitors] = useState<LocalVisitor[]>(() => {
+    const raw = localStorage.getItem('ottohello_visitors');
+    return raw ? (JSON.parse(raw) as LocalVisitor[]) : [];
+  });
 
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        setVisitors(JSON.parse(stored));
-      } catch (error) {
-        console.error('Error loading visitors from storage:', error);
-      }
-    }
-  }, []);
-
-  const saveVisitors = (updatedVisitors: Visitor[]) => {
-    setVisitors(updatedVisitors);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedVisitors));
-  };
-
-  const addVisitor = (visitorData: Omit<Visitor, 'id' | 'checkInTime'>) => {
-    const newVisitor: Visitor = {
-      ...visitorData,
-      id: crypto.randomUUID(),
+  /* ---------- ADD ---------- */
+  const addVisitor = ({
+    id,
+    fullName,
+  }: {
+    id: string;
+    fullName: string;
+  }) => {
+    const newVisitor: LocalVisitor = {
+      id,
+      fullName,
       checkInTime: new Date().toISOString(),
+      checkOutTime: null,
     };
-    
-    const updatedVisitors = [...visitors, newVisitor];
-    saveVisitors(updatedVisitors);
-    return newVisitor;
+    const updated = [...visitors, newVisitor];
+    setVisitors(updated);
+    localStorage.setItem('ottohello_visitors', JSON.stringify(updated));
   };
 
-  const checkOutVisitor = (visitorId: string) => {
-    const updatedVisitors = visitors.map(visitor =>
-      visitor.id === visitorId
-        ? { ...visitor, checkOutTime: new Date().toISOString() }
-        : visitor
+  /* ---------- CHECK-OUT ---------- */
+  const checkOutVisitor = (id: string) => {
+    const updated = visitors.map((v) =>
+      v.id === id ? { ...v, checkOutTime: new Date().toISOString() } : v
     );
-    saveVisitors(updatedVisitors);
-    
-    return updatedVisitors.find(v => v.id === visitorId);
+    setVisitors(updated);
+    localStorage.setItem('ottohello_visitors', JSON.stringify(updated));
+    return updated.find((v) => v.id === id) ?? null;
   };
 
-  const getActiveVisitors = () => {
-    return visitors.filter(visitor => !visitor.checkOutTime);
-  };
-
-  return {
-    visitors,
-    addVisitor,
-    checkOutVisitor,
-    getActiveVisitors,
-  };
+  return { visitors, addVisitor, checkOutVisitor };
 }
