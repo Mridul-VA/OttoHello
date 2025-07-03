@@ -57,13 +57,13 @@ export default function CheckInForm({ onSubmit, onBack }: CheckInFormProps) {
   const tourSteps: Step[] = [
     {
       target: '.capture-photo-btn',
-      content: 'Step 1 → Take the visitor's photo here first. This is required for security.',
+      content: 'Step 1 → Take the visitor\'s photo here first. This is required for security.',
       placement: 'bottom',
       disableBeacon: true,
     },
     {
       target: '.full-name-input',
-      content: 'Step 2 → Enter the visitor's full name.',
+      content: 'Step 2 → Enter the visitor\'s full name.',
       placement: 'top',
     },
     {
@@ -73,7 +73,7 @@ export default function CheckInForm({ onSubmit, onBack }: CheckInFormProps) {
     },
     {
       target: '.person-to-meet-input',
-      content: 'Step 4 → Type who the visitor is meeting. We'll notify them on Slack!',
+      content: 'Step 4 → Type who the visitor is meeting. We\'ll notify them on Slack!',
       placement: 'top',
     },
     {
