@@ -4,15 +4,16 @@ import React, { useState } from 'react';
 import WelcomeScreen       from './components/WelcomeScreen';
 import CheckInForm         from './components/CheckInForm';
 import CheckOutForm        from './components/CheckOutForm';
+import LateCheckInForm     from './components/LateCheckInForm';
 import ConfirmationScreen  from './components/ConfirmationScreen';
 
 import { useVisitorStorage } from './hooks/useVisitorStorage';
 
 /* ─── routes / screens ───────────────────────────────────────── */
-type Screen = 'welcome' | 'checkin' | 'checkout' | 'confirmation';
+type Screen = 'welcome' | 'checkin' | 'checkout' | 'late-checkin' | 'confirmation';
 
 interface ConfirmationData {
-  type: 'checkin' | 'checkout';
+  type: 'checkin' | 'checkout' | 'late-checkin';
   visitor: { id: string; fullName: string };
 }
 
@@ -32,6 +33,14 @@ export default function App() {
     addVisitor(newVisitor);
 
     setConfirm({ type: 'checkin', visitor: newVisitor });
+    setScreen('confirmation');
+  };
+
+  /* ─── called by LateCheckInForm after Supabase insert succeeds ─── */
+  const handleLateCheckInSuccess = (
+    newVisitor: { id: string; fullName: string }
+  ) => {
+    setConfirm({ type: 'late-checkin', visitor: newVisitor });
     setScreen('confirmation');
   };
 
@@ -68,6 +77,14 @@ export default function App() {
         />
       );
 
+    case 'late-checkin':
+      return (
+        <LateCheckInForm
+          onSubmit={handleLateCheckInSuccess}
+          onBack={() => setScreen('welcome')}
+        />
+      );
+
     case 'confirmation':
       return confirm ? (
         <ConfirmationScreen
@@ -82,6 +99,7 @@ export default function App() {
         <WelcomeScreen
           onCheckIn={() => setScreen('checkin')}
           onCheckOut={() => setScreen('checkout')}
+          onLateCheckIn={() => setScreen('late-checkin')}
         />
       );
   }

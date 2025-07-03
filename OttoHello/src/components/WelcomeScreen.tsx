@@ -1,14 +1,15 @@
 import React from 'react';
-import { UserCheck, UserX, Zap } from 'lucide-react';
+import { UserCheck, UserX, Zap, Clock } from 'lucide-react';
 
 interface WelcomeScreenProps {
   onCheckIn: () => void;
   onCheckOut: () => void;
+  onLateCheckIn: () => void;
 }
 
-export default function WelcomeScreen({ onCheckIn, onCheckOut }: WelcomeScreenProps) {
+export default function WelcomeScreen({ onCheckIn, onCheckOut, onLateCheckIn }: WelcomeScreenProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative ">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
       {/* Animated Background Elements */}
       <div className="absolute inset-0">
         <div className="absolute top-20 left-20 w-72 h-72 bg-blue-500/20 rounded-full blur-3xl animate-pulse"></div>
@@ -20,7 +21,7 @@ export default function WelcomeScreen({ onCheckIn, onCheckOut }: WelcomeScreenPr
       <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
 
       <div className="relative z-10 min-h-screen flex items-center justify-center p-6">
-        <div className="max-w-4xl w-full">
+        <div className="max-w-5xl w-full">
           {/* Header Section */}
           <div className="text-center mb-16">
             {/* Logo and Branding */}
@@ -41,51 +42,65 @@ export default function WelcomeScreen({ onCheckIn, onCheckOut }: WelcomeScreenPr
 
             {/* Welcome Message */}
             <div className="mb-12 text-center">
-              <h2 className="text-6xl md:text-8xl font-bold text-white mb-6 leading-tight">
+              <h2 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
                 Welcome to
               </h2>
-              <div className="text-6xl md:text-8xl font-black bg-gradient-to-r
-+                 from-emerald-400 via-cyan-500 to-blue-600
-+                 bg-clip-text text-transparent mb-8 px-4">
+              <div className="text-5xl md:text-7xl font-black bg-gradient-to-r
+                 from-emerald-400 via-cyan-500 to-blue-600
+                 bg-clip-text text-transparent mb-8 px-4 leading-tight">
                 GrowthJockey
               </div>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col md:flex-row gap-8 justify-center items-center">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 justify-center items-center max-w-4xl mx-auto">
             <button
               onClick={onCheckIn}
-              className="group relative w-full md:w-80 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold py-8 px-12 rounded-2xl shadow-2xl shadow-cyan-500/25 transform hover:scale-105 transition-all duration-300 overflow-hidden"
+              className="group relative w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold py-8 px-8 rounded-2xl shadow-2xl shadow-cyan-500/25 transform hover:scale-105 transition-all duration-300 overflow-hidden"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <div className="relative flex items-center justify-center gap-4">
+              <div className="relative flex flex-col items-center justify-center gap-4">
                 <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center group-hover:rotate-12 transition-transform duration-300">
                   <UserCheck className="w-7 h-7" />
                 </div>
-                <div className="text-left">
-                  <div className="text-2xl font-bold">Check-In</div>
+                <div className="text-center">
+                  <div className="text-xl font-bold">Check-In</div>
                   <div className="text-cyan-100 text-sm">Start your visit</div>
                 </div>
               </div>
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-600 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
             </button>
             
             <button
               onClick={onCheckOut}
-              className="group relative w-full md:w-80 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold py-8 px-12 rounded-2xl shadow-2xl shadow-emerald-500/25 transform hover:scale-105 transition-all duration-300 overflow-hidden"
+              className="group relative w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold py-8 px-8 rounded-2xl shadow-2xl shadow-emerald-500/25 transform hover:scale-105 transition-all duration-300 overflow-hidden"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <div className="relative flex items-center justify-center gap-4">
+              <div className="relative flex flex-col items-center justify-center gap-4">
                 <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center group-hover:rotate-12 transition-transform duration-300">
                   <UserX className="w-7 h-7" />
                 </div>
-                <div className="text-left">
-                  <div className="text-2xl font-bold">Check-Out</div>
+                <div className="text-center">
+                  <div className="text-xl font-bold">Check-Out</div>
                   <div className="text-emerald-100 text-sm">Complete your visit</div>
                 </div>
               </div>
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-emerald-400 to-teal-600 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+            </button>
+
+            <button
+              onClick={onLateCheckIn}
+              className="group relative w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white font-bold py-8 px-8 rounded-2xl shadow-2xl shadow-orange-500/25 transform hover:scale-105 transition-all duration-300 overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="relative flex flex-col items-center justify-center gap-4">
+                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center group-hover:rotate-12 transition-transform duration-300">
+                  <Clock className="w-7 h-7" />
+                </div>
+                <div className="text-center">
+                  <div className="text-xl font-bold">Late Check-In</div>
+                  <div className="text-orange-100 text-sm">After 10:30 AM</div>
+                </div>
+              </div>
             </button>
           </div>
 

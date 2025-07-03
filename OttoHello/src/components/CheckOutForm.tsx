@@ -9,6 +9,7 @@ import {
   Activity,
 } from 'lucide-react';
 import { LocalVisitor } from '../hooks/useVisitorStorage';
+import { supabase } from '../supabaseClient';
 
 /* ---------- props ---------------------------------------------------- */
 interface CheckOutFormProps {
@@ -26,13 +27,7 @@ export default function CheckOutForm({
   const [searchTerm,   setSearchTerm]   = useState('');
   const [foundVisitor, setFoundVisitor] = useState<LocalVisitor | null>(null);
   const [notFound,     setNotFound]     = useState(false);
-
-  /*  🔎  TEMP DEBUG LOGS  — remove later */
-  console.log('👀 props.visitors =', visitors);
-  console.log(
-    '✅ activeVisitors.length =',
-    visitors.filter(v => !v.checkOutTime).length,
-  );
+  const [checkingOut,  setCheckingOut]  = useState(false);
 
   /* ---------- helpers ------------------------------------------------ */
   const formatPurpose = (v: LocalVisitor) => {
@@ -68,8 +63,30 @@ export default function CheckOutForm({
     if (e.key === 'Enter') handleSearch();
   };
 
-  const handleCheckOutClick = () => {
-    if (foundVisitor) onCheckOut(foundVisitor.id);
+  const handleCheckOutClick = async () => {
+    if (!foundVisitor || checkingOut) return;
+    
+    setCheckingOut(true);
+    
+    try {
+      // Update Supabase with checkout time
+      const { error } = await supabase
+        .from('visitors')
+        .update({ 
+          checked_out_at: new Date().toISOString() 
+        })
+        .eq('id', foundVisitor.id);
+
+      if (error) {
+        console.error('Failed to update checkout time in Supabase:', error);
+        // Still proceed with local checkout even if Supabase fails
+      }
+    } catch (error) {
+      console.error('Error updating checkout time:', error);
+    }
+    
+    setCheckingOut(false);
+    onCheckOut(foundVisitor.id);
   };
 
   const getVisitDuration = (iso: string) => {
@@ -217,9 +234,10 @@ export default function CheckOutForm({
 
                   <button
                     onClick={handleCheckOutClick}
-                    className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold py-4 rounded-xl text-lg transition-all"
+                    disabled={checkingOut}
+                    className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold py-4 rounded-xl text-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    Complete Check-Out
+                    {checkingOut ? 'Processing...' : 'Complete Check-Out'}
                   </button>
                 </div>
               )}
